@@ -1,5 +1,6 @@
 import logo from './logo.svg';
 import './App.css';
+import HostAuthToken from '../Services/HostAuthToken';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
         >
           Learn React
         </a>
+        <button style={{marginTop:'5%'}} onClick={HostAuthToken}>Presioname</button>
       </header>
     </div>
   );

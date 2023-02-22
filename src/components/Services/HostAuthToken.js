@@ -19,9 +19,8 @@ const options = {
   },
 };
 
-function HostAuthToken () {
-
-    axios.get(url, options)
+async function HostAuthToken (setProperties) {
+    await axios.get(url, options)
     .then((response) => {
         const properties = response.data.result.map((property)=>{
             return {
@@ -33,10 +32,13 @@ function HostAuthToken () {
                 countryCode:property.countryCode
             }
         }) ;
-      console.log(properties);
+        console.log(properties);
+        setProperties(properties);
+        return properties ;
     })
     .catch((error) => {
-      console.error(error);
+        console.error(error);
+        return error ;
     });
     
 }

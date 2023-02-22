@@ -1,24 +1,25 @@
+import React, { useState } from 'react';
 import logo from './logo.svg';
 import './App.css';
 import HostAuthToken from '../Services/HostAuthToken';
 
 function App() {
+  const[propertieslist, setpropertieslist] = useState([]);
+
+  const handleOnClickPresionalo = async (e) => {
+      e.preventDefault();
+      const list = await HostAuthToken(setpropertieslist) ;
+      console.log(list);
+  }
+
   return (
     <div className="App">
       <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-        <button style={{marginTop:'5%'}} onClick={HostAuthToken}>Presioname</button>
+        <button style={{marginTop:'5%'}} onClick={handleOnClickPresionalo}>Presioname</button>
+        {propertieslist?.map((property)=>{
+          <div>{property.id}</div>
+        })}
       </header>
     </div>
   );

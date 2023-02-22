@@ -23,7 +23,17 @@ function HostAuthToken () {
 
     axios.get(url, options)
     .then((response) => {
-      console.log(response.data);
+        const properties = response.data.result.map((property)=>{
+            return {
+                id:property.id, 
+                address:property.address,
+                city:property.city, 
+                state:property.state,
+                zipcode:property.zipcode,
+                countryCode:property.countryCode
+            }
+        }) ;
+      console.log(properties);
     })
     .catch((error) => {
       console.error(error);

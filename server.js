@@ -67,7 +67,7 @@ headers: {
         totalTax: response.data.result.totals[14],
         totalRentalRevenue: response.data.result.totals[15],
         totalPmCommission: response.data.result.totals[16],
-        totalOwnerPayout: response.data.result.totals[17], 
+        totalOwnerPayout: response.data.result.totals[17],
           }
         console.log(tableData);
         res.send({ tableData });
@@ -79,8 +79,10 @@ headers: {
 });
 });
 
+const propertyManager = 345345;
+
 // airtable function to get listings from hostaway
-app.get('/airtable', async (req, res) => {
+app.get('/hostaway/getlistings', async (req, res) => {
   await axios.get(url, options)
   .then(async (response) => {
     const properties = response.data.result.map((property)=>{
@@ -93,11 +95,70 @@ app.get('/airtable', async (req, res) => {
         }
     }) ;
     console.log(properties);
-   await air.functionAirtable(properties);
-})
-.catch((error) => {
+   await air.postListings(propertyManager, properties);
+  })
+  .catch((error) => {
     console.error(error);
     return(null);
-});
+  });
   res.send({ express: 'air crobby' });
-})
+});
+
+// show listings saved in airtable
+app.get('/airtable/getlistings', async (req, res) => {
+  await air.getListings(propertyManager, function(error, result) {
+    if(error) res.send({"ocurrio un error" : error});
+    console.log("printing records", result);
+    res.send({listings: result})
+  })
+});
+
+
+// save new listings from hostaway in airtable
+app.get('/savelistings', async (req, res) => {
+  await air.getListings(propertyManager, async function(error, currentListings) {
+    if(error) res.send({"There was an error reading from Airtable": error});
+    await axios.get(url, options)
+    .then(async (hostawayListings) => {
+      const properties = hostawayListings.data.result.map((property)=>{
+          return {
+              id:property.id,
+              address:property.address,
+              city:property.city,
+              state:property.state,
+              countryCode:property.countryCode
+          }
+      }) ;
+      const newListings = properties.filter(
+        newProp => !currentListings.filter(
+          current => current.id === newProp.id
+        ).length
+      );
+      await air.postListings(propertyManager, newListings);
+      res.send({"These are the new listings": newListings});
+    })
+    .catch((error) => {
+      console.error(error);
+      res.send({"There was an error reading from Hostaway": error});
+    });
+  })
+});
+
+
+// send saved US-only listings to household
+app.get('/household/postlistings', async (req, res) => {
+  await air.getListings(propertyManager, async function(error, results) {
+    if(error) res.send({"There was an error reading from Airtable": error});
+    const USProperties = results.filter((property) => property.countryCode === "US");
+    const USPropsAddresses = USProperties.map((property) => {
+      return {
+        address: property.address
+      }
+    });
+    console.log("These are the only US properties", USProperties);
+    console.log("the amount of properties saved are", results.length);
+    console.log("the amaount of US properties are", USProperties.length);
+    console.log("These are the addresses only", USPropsAddresses);
+    res.send({"These are the US only Listings": USProperties});
+  })
+});

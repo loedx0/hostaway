@@ -1,134 +1,72 @@
-const express = require('express'); //Line 1
-const app = express(); //Line 2
-const axios = require('axios');
+const express = require('express');
+const app = express();
 require('dotenv').config();
-const air = require('./airtableservice.js');
-const port = process.env.PORT || 5001; //Line 3
+const air = require('./airtableService.js');
+const hostaway = require('./hostawayService.js');
+const port = process.env.PORT || 5001;
 
-// Variables para usar el servicio de get listings, no se pudo con module exports por eso lo dejamos aqui adentro para que funcione
-const url = 'https://api.hostaway.com/v1/listings';
-const authType = 'Bearer';
-const authKey = process.env.API_KEY;
-const auth = authType+' '+authKey;
-const options = {
-  headers: {
-    Authorization: auth,
-    'Cache-control': 'no-cache',
-  },
-  params: {
-    limit: '',
-    offset: '',
-    sortOrder: '',
-    city: '',
-    match: '',
-    country: '',
-    isSyncig: '',
-    contactName: '',
-    propertyTypeId: '',
-  },
-};
-
-
-//variables for the consolidation report service of hostaway
-const urlreport = 'https://api.hostaway.com/v1/finance/report/consolidated';
+// Variables to manage for each function
+const propertyManager = 345345;
+const listingId = 140052;
 const fromDateInput = '2023-01-01';
 const toDateInput = '2023-02-01';
-const listingMapIdsInput = [140052];
+const secret = "8862230840d67d623b45f94af4d1c0119a54152cb0ceff8f9ce6cace330a200f";
+const clientId = "52937";
 
-// This displays message that the server running and listening to specified port
-app.listen(port, () => console.log(`Listening on port ${port}`)); //Line 6
-
-// create a GET route
-app.get('/express_backend', (req, res) => { //Line 9
-  res.send({ express: 'YOUR EXPRESS BACKEND IS CONNECTED TO REACT 2' }); //Line 10
-}); //Line 11
-
-
-// get the consolidation report from hostaway
-app.get('/consolidation-report', (req, res) => {
-  axios.post(urlreport, {
-    format: 'json',
-    fromDate: fromDateInput,
-    toDate: toDateInput,
-    listingMapIds: listingMapIdsInput,
-}, {
-headers: {
-    'Authorization': auth,
-    "Content-type": "application/json",
-}})
-.then((response) => {
-  if(response.data.status === "success"){
-    const tableData =  {
-        listingId: listingMapIdsInput,
-        reportFromDate: fromDateInput,
-        reportToDate: toDateInput,
-        listingAddress: response.data.result.rows[0][11],
-        totalGuestFees: response.data.result.totals[13],
-        totalTax: response.data.result.totals[14],
-        totalRentalRevenue: response.data.result.totals[15],
-        totalPmCommission: response.data.result.totals[16],
-        totalOwnerPayout: response.data.result.totals[17],
-          }
-        console.log(tableData);
-        res.send({ tableData });
+const getConsolidationReport = async (req, res) => {
+  const listing = req.query['listing'] || listingId;
+  await hostaway.getConsolidationReport(
+    propertyManager,
+    listing,
+    fromDateInput,
+    toDateInput,
+    async function(error, response) {
+      if(error) {
+        res.send({ "There was an error getting data from Hostaway": error});
+        return;
       }
-    })
-.catch((error) => {
-  console.error(error);
-  res.send({ error });
-});
-});
-
-const propertyManager = 345345;
-
-// airtable function to get listings from hostaway
-app.get('/hostaway/getlistings', async (req, res) => {
-  await axios.get(url, options)
-  .then(async (response) => {
-    const properties = response.data.result.map((property)=>{
-        return {
-            id:property.id,
-            address:property.address,
-            city:property.city,
-            state:property.state,
-            countryCode:property.countryCode
-        }
-    }) ;
-    console.log(properties);
-   await air.postListings(propertyManager, properties);
+      if(!response) {
+        res.send({error: "No listing was found"});
+        return;
+      }
+      await air.postReportData(listingId, response);
+      res.send({"Consolidation report": response});
   })
-  .catch((error) => {
-    console.error(error);
-    return(null);
-  });
-  res.send({ express: 'air crobby' });
-});
+};
 
-// show listings saved in airtable
-app.get('/airtable/getlistings', async (req, res) => {
-  await air.getListings(propertyManager, function(error, result) {
-    if(error) res.send({"ocurrio un error" : error});
-    console.log("printing records", result);
+const hostawayGetListings = async (req, res) => {
+  await hostaway.getListings(async function(error, response) {
+    if(error){
+      res.send({ "There was an error getting listings from Hostaway": error});
+      return;
+    }
+    await air.postListings(propertyManager, response);
+    res.send({ express: 'air crobby' });
+  })
+};
+
+const airtableGetListings = async (req, res) => {
+  const managerId = req.query['manager_id'] || propertyManager;
+  await air.getListings(managerId, false, function(error, result) {
+    if(error) {
+      res.send({"ocurrio un error" : error});
+      return;
+    }
     res.send({listings: result})
   })
-});
+};
 
-
-// save new listings from hostaway in airtable
-app.get('/savelistings', async (req, res) => {
-  await air.getListings(propertyManager, async function(error, currentListings) {
-    if(error) res.send({"There was an error reading from Airtable": error});
-    await axios.get(url, options)
-    .then(async (hostawayListings) => {
-      const properties = hostawayListings.data.result.map((property)=>{
-          return {
-              id:property.id,
-              address:property.address,
-              city:property.city,
-              state:property.state,
-              countryCode:property.countryCode
-          }
-      }) ;
+const saveListings = async (req, res) => {
+  await air.getListings(propertyManager, false, async function(errorAirtable, currentListings) {
+    if(errorAirtable) {
+      res.send({"There was an error reading from Airtable": errorAirtable});
+      return;
+    }
+    await hostaway.getListings(async function(errorHostaway, properties) {
+      if(errorHostaway) {
+        res.send({ "There was an error getting listings from Hostaway": errorHostaway});
+        return;
+      }
       const newListings = properties.filter(
         newProp => !currentListings.filter(
           current => current.id === newProp.id
@@ -136,29 +74,132 @@ app.get('/savelistings', async (req, res) => {
       );
       await air.postListings(propertyManager, newListings);
       res.send({"These are the new listings": newListings});
-    })
-    .catch((error) => {
-      console.error(error);
-      res.send({"There was an error reading from Hostaway": error});
     });
-  })
-});
+  });
+};
 
-
-// send saved US-only listings to household
-app.get('/household/postlistings', async (req, res) => {
+const householdPostListings = async (req, res) => {
   await air.getListings(propertyManager, async function(error, results) {
-    if(error) res.send({"There was an error reading from Airtable": error});
+    if(error) {
+      res.send({"There was an error reading from Airtable": error});
+      return;
+    }
     const USProperties = results.filter((property) => property.countryCode === "US");
     const USPropsAddresses = USProperties.map((property) => {
       return {
         address: property.address
       }
     });
-    console.log("These are the only US properties", USProperties);
-    console.log("the amount of properties saved are", results.length);
-    console.log("the amaount of US properties are", USProperties.length);
     console.log("These are the addresses only", USPropsAddresses);
     res.send({"These are the US only Listings": USProperties});
+  });
+}
+
+const saveAllListingsReports = async (req, res) => {
+  await air.getListings(propertyManager, async function(error, results) {
+    if(error) {
+      res.send({"There was an error reading from Airtable": error});
+      return;
+    }
+    results.forEach( async(listing) => {
+      await hostaway.getConsolidationReport(
+        propertyManager,
+        listing.id,
+        listing.address,
+        fromDateInput,
+        toDateInput,
+        async function(error, response) {
+          if(error) {
+            res.send({ "There was an error getting data from Hostaway": error});
+            return;
+          }
+          if(!response) {
+            res.send({error: "No listing was found"});
+            return;
+          }
+          await air.postReportData(listingId, response);
+        })
+      })
+    res.send({"Saved consolidation report for listings": results});
   })
+}
+
+const getAccessToken = async (req, res) => {
+  await hostaway.getAccessToken(
+    clientId,
+    secret,
+    function(error, response) {
+      if(error) {
+        res.send({ "There was an error obtaining hostaway accesstoken": error});
+        return;
+      }
+      res.send({"This is your new access token": response});
+    }
+  )
+}
+
+const setToken = async (req, res) => {
+  const managerId = req.query['manager_id'] || propertyManager;
+  const token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiI1MjkzNyIsImp0aSI6ImY2MjJiNzE2MTk4YzBjMjg4OWExZDM1NGIyYjUwMmE0MWViY2U4ODBmNzlmZmVhODQ1YTAxMmI2OWY1MzliOTVmNTRiZDVmMDM5ZDcwYzM2IiwiaWF0IjoxNjc4Mzg5MjkxLCJuYmYiOjE2NzgzODkyOTEsImV4cCI6MTc0MTU0NzY5MSwic3ViIjoiIiwic2NvcGVzIjpbImdlbmVyYWwiXSwic2VjcmV0SWQiOjEyNTE0fQ.hL640wE8Rmgu4UpPR8VIF1onQTO6_Key3rUO5mlxQDbuH78e9yepDwsH0XQjN4iq-7yeVOglLJbpwzx7QnkMZomEv2GT44Nu0hL2WeXaOQQMzHrc1Lzo7LM2p4cuynpywjWUhp5FQZCNDh22nCt36DcLylFhM41xH5-Jujh76WE";
+  await air.getUserIntegration(managerId, async function(error, response) {
+    if(error) {
+      res.send({"There was an error getting the user integration data": error});
+      return;
+    }
+    await air.setAccessToken(response.airtableId, token, function(error, response) {
+      if(error) {
+        res.send({"There was an error setting the new token": error});
+        return;
+      }
+      res.send({"This is the data for the user with the new token": response});
+    });
+  })
+}
+
+const setUserIntegration = async (req, res) => {
+  const managerId = req.query['manager_id'] || propertyManager;
+  const hostawayClientId = req.query['client_id'] || clientId;
+  const hostawaySecret = req.query['secret'] || secret;
+  const email = req.query['email'] || "tester@testing.test";
+  const company = req.query['company'] || 'Company TEST';
+  await air.postManagerHostawayIntegration(
+    managerId,
+    hostawayClientId,
+    hostawaySecret,
+    email,
+    company,
+    function(error, response) {
+      if(error) {
+        res.send({"There was an error setting the new hostaway integration": error});
+        return;
+      }
+      res.send({"New integration": response});
+  })
+}
+
+// This displays message that the server running and listening to specified port
+app.listen(port, () => console.log(`Listening on port ${port}`));
+// create a GET route
+app.get('/express_backend', (req, res) => {
+  res.send({ express: 'YOUR EXPRESS BACKEND IS CONNECTED TO REACT' });
 });
+// get the consolidation report from hostaway (use it like /consolidation-report?listing={integer})
+app.get('/consolidation_report', (req, res) => {getConsolidationReport(req, res)});
+// airtable function to get listings from hostaway (saves every listing regardless if already exists)
+//app.get('/hostaway/get_listings', (req,res) => {hostawayGetListings(req, res)});
+// show listings saved in airtable
+app.get('/airtable/get_listings', (req, res) => {airtableGetListings(req, res)});
+// save new listings from hostaway in airtable
+app.get('/save_listings', (req, res) => {saveListings(req, res)});
+// send saved US-only listings to household
+app.get('/household/post_listings', (req, res) => {householdPostListings(req, res)});
+// save reports from all listings from a manager
+app.get('/save_reports', (req, res) => {saveAllListingsReports(req, res)});
+
+// Example http://localhost:5001/set_user_integration?manager_id=99999&email=this@is.us&company=This%C2%A0is%C2%A0us
+app.get('/set_user_integration', (req, res) => {setUserIntegration(req, res)});
+
+app.get('/hostaway/get_token', (req, res) => {getAccessToken(req, res)});
+
+// Example http://localhost:5001/set_token?manager_id=99999
+app.get('/set_token', (req, res) => {setToken(req, res)});

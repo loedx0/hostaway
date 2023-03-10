@@ -86,7 +86,8 @@ async function getListings(callback) {
             address:property.address,
             city:property.city,
             state:property.state,
-            countryCode:property.countryCode
+            countryCode:property.countryCode,
+            zipcode:property.zipcode
         }
     });
     callback(null, properties);

@@ -3,6 +3,7 @@ const app = express();
 require('dotenv').config();
 const air = require('./airtableService.js');
 const hostaway = require('./hostawayService.js');
+const household = require('./householdService.js');
 const port = process.env.PORT || 5001;
 
 // Variables to manage for each function
@@ -57,7 +58,8 @@ const airtableGetListings = async (req, res) => {
 };
 
 const saveListings = async (req, res) => {
-  await air.getListings(propertyManager, false, async function(errorAirtable, currentListings) {
+  const managerId = req.query['manager_id'] || propertyManager;
+  await air.getListings(managerId, false, async function(errorAirtable, currentListings) {
     if(errorAirtable) {
       res.send({"There was an error reading from Airtable": errorAirtable});
       return;
@@ -72,7 +74,7 @@ const saveListings = async (req, res) => {
           current => current.id === newProp.id
         ).length
       );
-      await air.postListings(propertyManager, newListings);
+      await air.postListings(managerId, newListings);
       res.send({"These are the new listings": newListings});
     });
   });
@@ -157,24 +159,45 @@ const setToken = async (req, res) => {
 }
 
 const setUserIntegration = async (req, res) => {
-  const managerId = req.query['manager_id'] || propertyManager;
+  // const managerId = req.query['manager_id'] || propertyManager;
   const hostawayClientId = req.query['client_id'] || clientId;
   const hostawaySecret = req.query['secret'] || secret;
   const email = req.query['email'] || "tester@testing.test";
   const company = req.query['company'] || 'Company TEST';
-  await air.postManagerHostawayIntegration(
-    managerId,
-    hostawayClientId,
-    hostawaySecret,
-    email,
+  const companyIdentifier = req.query['identifier'] || "company_test";
+  const firstName = req.query['firstname'] || 'Tester';
+  const lastName = req.query['lastname'] || "Testering";
+
+  await household.postManager(
     company,
-    function(error, response) {
+    companyIdentifier,
+    email,
+    firstName,
+    lastName,
+    async function(error, manager) {
       if(error) {
-        res.send({"There was an error setting the new hostaway integration": error});
+        res.send({"There was an error in Household creating a Property Manager": error});
         return;
       }
-      res.send({"New integration": response});
-  })
+      console.log("printing outside manager", manager.data);
+      await air.postManagerHostawayIntegration(
+        manager.data.id_company_user,
+        hostawayClientId,
+        hostawaySecret,
+        email,
+        company,
+        companyIdentifier,
+        firstName,
+        lastName,
+        function(error, response) {
+          if(error) {
+            res.send({"There was an error setting the new hostaway integration": error});
+            return;
+          }
+          res.send({"New integration": response});
+      })
+  });
+
 }
 
 // This displays message that the server running and listening to specified port
@@ -196,7 +219,7 @@ app.get('/household/post_listings', (req, res) => {householdPostListings(req, re
 // save reports from all listings from a manager
 app.get('/save_reports', (req, res) => {saveAllListingsReports(req, res)});
 
-// Example http://localhost:5001/set_user_integration?manager_id=99999&email=this@is.us&company=This%C2%A0is%C2%A0us
+// Example http://localhost:5001/set_user_integration?firstname=PMTester&lastname=Testerer&email=pm1@household.com&company=Company%C2%A0Test&identifier=company_test
 app.get('/set_user_integration', (req, res) => {setUserIntegration(req, res)});
 
 app.get('/hostaway/get_token', (req, res) => {getAccessToken(req, res)});

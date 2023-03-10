@@ -7,6 +7,7 @@ const listingsFields = {
   address: 'Address',
   city: 'City',
   state: 'State',
+  zipcode: "Zipcode",
   countryCode: 'Country Code',
   managerId: "ID Property Manager",
   propertyOwner: "Property Owner",
@@ -21,8 +22,9 @@ async function postListings(managerId, propertylist) {
         [listingsFields.city]: property.city,
         [listingsFields.state]: property.state,
         [listingsFields.countryCode]: property.countryCode,
-        [listingsFields.managerId]: managerId
-      }, function(err, record) {
+        [listingsFields.managerId]: managerId,
+        [listingsFields.zipcode]: property.zipcode
+      }, { typecast: true }, function(err, record) {
         if (err) { console.error(err); return; }
       }
     );
@@ -94,6 +96,9 @@ const hostawayIntegrationFields = {
   clientId: "ID Hostaway",
   email: "Email",
   company: "Company",
+  companyIdentifier: "Company Identifier",
+  firstName: "First Name",
+  lastName: "Last Name",
 };
 
 async function postManagerHostawayIntegration(
@@ -102,6 +107,9 @@ async function postManagerHostawayIntegration(
   secret,
   email,
   company,
+  companyIdentifier,
+  firstName,
+  lastName,
   callback
 ) {
   base('hostaway-integration').create({
@@ -110,6 +118,9 @@ async function postManagerHostawayIntegration(
     [hostawayIntegrationFields.secret]: secret,
     [hostawayIntegrationFields.email]: email,
     [hostawayIntegrationFields.company]: company,
+    [hostawayIntegrationFields.companyIdentifier]: companyIdentifier,
+    [hostawayIntegrationFields.firstName]: firstName,
+    [hostawayIntegrationFields.lastName]: lastName,
   }, { typecast: true }, function(error, response) {
     if(error) {
       console.log("there was an error creating hostaway integration", error);

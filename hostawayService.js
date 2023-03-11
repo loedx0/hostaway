@@ -4,14 +4,6 @@ const axios = require('axios');
 const urlListings = 'https://api.hostaway.com/v1/listings';
 
 const authType = 'Bearer';
-const authKey = process.env.API_KEY;
-const auth = authType+' '+authKey;
-const options = {
-  headers: {
-    Authorization: auth,
-    'Cache-control': 'no-cache',
-  }
-};
 
 // variables to get the access token
 const urlToken = 'https://api.hostaway.com/v1/accessTokens';
@@ -37,6 +29,7 @@ async function getAccessToken(client_id, client_secret, callback) {
 const urlReport = 'https://api.hostaway.com/v1/finance/report/consolidated';
 
 async function getConsolidationReport(
+  token,
   managerId,
   listingId,
   listingAddress,
@@ -44,6 +37,7 @@ async function getConsolidationReport(
   toDateInput,
   callback
 ) {
+  const auth = authType+' '+token;
   axios.post(urlReport, {
     format: 'json',
     fromDate: fromDateInput,
@@ -55,7 +49,9 @@ async function getConsolidationReport(
       "Content-type": "application/json",
   }})
   .then((response) => {
-    if(response.data.status === "success" && response.data.result.rows.length > 0){
+    console.log("printing property manager", managerId);
+    console.log("printing response", response);
+    if(response.data.result.rows.length > 0){
       const tableData =  {
         listingId: parseInt(listingId),
         reportFromDate: fromDateInput,
@@ -68,16 +64,26 @@ async function getConsolidationReport(
         totalPmCommission: response.data.result.totals[16],
         totalOwnerPayout: response.data.result.totals[17],
       }
+      console.log("printing table data", tableData);
       callback(null, tableData);
+    } else {
+      callback(null, null);
     }
   })
   .catch((error) => {
-    console.error(error);
+    console.log(error);
     callback(error, null);
   });
 }
 
-async function getListings(callback) {
+async function getListings(token, callback) {
+  const auth = authType+' '+token;
+  const options = {
+    headers: {
+      Authorization: auth,
+      'Cache-control': 'no-cache',
+    }
+  };
   await axios.get(urlListings, options)
   .then(async (response) => {
     const properties = response.data.result.map((property)=>{

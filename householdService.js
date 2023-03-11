@@ -1,8 +1,6 @@
 const axios = require('axios');
 
 const urlPostManager = "https://api.usehousehold.com/v1/external/companies/create_pm";
-
-
 async function postManager(companyName, companyIdentifier, email, firstname, lastname, callback) {
   const postManagerBody = {
     company: {
@@ -24,6 +22,23 @@ async function postManager(companyName, companyIdentifier, email, firstname, las
   .then((response) => { callback(null, response) }).catch((error) => { callback(error, null) });
 }
 
+const urlPostListing = "https://api.usehousehold.com/v1/external/companies/create_property";
+async function postListing(managerId, address, callback) {
+  const postListingBody = {
+    id_company_user: managerId,
+    address
+  }
+  axios.post(urlPostListing, postListingBody)
+  .then((response) => {
+    console.log("printing household response", response);
+    callback(null, response.data.property)
+   }).catch((error) => {
+    console.log("printing household error", error);
+    callback(error, null)
+  });
+}
+
 module.exports = {
   postManager,
+  postListing,
 };

@@ -11,6 +11,7 @@ const listingsFields = {
   countryCode: 'Country Code',
   managerId: "ID Property Manager",
   propertyOwner: "Property Owner",
+  householdId: "ID Household",
 };
 
 async function postListings(managerId, propertylist) {
@@ -23,12 +24,33 @@ async function postListings(managerId, propertylist) {
         [listingsFields.state]: property.state,
         [listingsFields.countryCode]: property.countryCode,
         [listingsFields.managerId]: managerId,
-        [listingsFields.zipcode]: property.zipcode
+        [listingsFields.zipcode]: property.zipcode,
+        // [listingsFields.householdId]: property.householdId,
       }, { typecast: true }, function(err, record) {
         if (err) { console.error(err); return; }
       }
     );
   });
+};
+
+async function postListing(managerId, householdId, property) {
+  // base('tbldeBq4ZZWIm0DZq').create({
+  const listingObj = {
+    [listingsFields.id]: property.id ,
+    [listingsFields.address]: property.address,
+    [listingsFields.city]: property.city,
+    [listingsFields.state]: property.state,
+    [listingsFields.countryCode]: property.countryCode,
+    [listingsFields.managerId]: managerId,
+    [listingsFields.zipcode]: property.zipcode,
+  }
+  if(householdId > 0){
+    listingObj["ID Household"] = householdId;
+  }
+  base('listings').create(listingObj, { typecast: true }, function(err, record) {
+      if (err) { console.error(err); return; }
+    }
+  );
 };
 
 async function getListings(managerId, findUnowned, responseCallback) {
@@ -49,6 +71,8 @@ async function getListings(managerId, findUnowned, responseCallback) {
       state: listing.get("State"),
       countryCode: listing.get("Country Code"),
       propertyOwner: listing.get("Property Owner"),
+      zipcode: listing.get('Zipcode'),
+      householdId: listing.get('ID Household'),
       managerId
     }));
     responseCallback(null, formattedRecords);
@@ -68,9 +92,13 @@ const reportFields = {
   rentalRevenue: 'Rental Revenue',
   pmCommission: 'PM Commission',
   ownerPayout: 'Owner Payout',
+  managerId: "ID Property Manager",
 };
 
-async function postReportData(listingId, reportData) {
+async function postReportData(managerId, listingId, reportData) {
+  console.log("printing vars");
+  console.log(managerId);
+  console.log(listingId);
   base('listing-reports').create({
     [reportFields.address]: reportData.listingAddress,
     [reportFields.addressDescription]: reportData.listingAddressDescription,
@@ -82,12 +110,40 @@ async function postReportData(listingId, reportData) {
     [reportFields.rentalRevenue]: parseFloat(reportData.totalRentalRevenue),
     [reportFields.pmCommission]: parseFloat(reportData.totalPmCommission),
     [reportFields.ownerPayout]: parseFloat(reportData.totalOwnerPayout),
+    [reportFields.managerId]: managerId,
   },
   { typecast: true },
   function(error, response) {
     if(error) console.log(error);
   });
 };
+
+async function getReportData(managerId, callback) {
+  base('listing-reports').select({
+      filterByFormula: `({ID Property Manager} = ${managerId} )`
+  }).all(async (error, reportData) => {
+    if(error) {
+      console.log("there was an error getting the report data");
+      callback(error, null);
+    }
+    const formattedResponse = reportData.map((report) => {
+      return {
+        airtableId: report.id,
+        listingId: report.get("ID Listing"),
+        fromDate: report.get("From Date"),
+        toDate: report.get("To Date"),
+        address: report.get("Address"),
+        addressDescription: report.get("Address Description"),
+        guestFees: report.get("Guest Fees"),
+        taxes: report.get("Taxes"),
+        rentalRevenue: report.get("Rental Revenue"),
+        pmCommission: report.get("PM Commission"),
+        ownerPayout: report.get("Owner Payout"),
+      }
+    });
+    callback(null, formattedResponse);
+  });
+}
 
 const hostawayIntegrationFields = {
   managerId: "ID Property Manager",
@@ -110,6 +166,7 @@ async function postManagerHostawayIntegration(
   companyIdentifier,
   firstName,
   lastName,
+  token,
   callback
 ) {
   base('hostaway-integration').create({
@@ -121,6 +178,7 @@ async function postManagerHostawayIntegration(
     [hostawayIntegrationFields.companyIdentifier]: companyIdentifier,
     [hostawayIntegrationFields.firstName]: firstName,
     [hostawayIntegrationFields.lastName]: lastName,
+    [hostawayIntegrationFields.token]: token,
   }, { typecast: true }, function(error, response) {
     if(error) {
       console.log("there was an error creating hostaway integration", error);
@@ -167,12 +225,43 @@ async function setAccessToken(integrationId, token, callback) {
   });
 };
 
+async function getManager(email, callback) {
+  console.log("printing email" + `  (Email = '${email}')` )
+  base('hostaway-integration').select({
+    filterByFormula: `(Email = '${email}')`,
+  }).all((error, response) => {
+    try{
+
+      if(error){
+        console.log("There was an error trying to get manager", error);
+        callback(error, null);
+      }
+      console.log("printing response", response);
+      if(response.length > 0){
+        const formattedResponse = {
+          managerId: response[0].get("ID Property Manager"),
+          token: response[0].get("Token"),
+          email: response[0].get("Email"),
+          firstName: response[0].get("First Name"),
+          lastName: response[0].get("Last Name"),
+        }
+        console.log("printing formatted", formattedResponse);
+        callback(null, formattedResponse);
+      }
+      callback(null, {managerId: null});
+    } catch(e) {}
+  })
+}
+
 module.exports = {
   postListings,
+  postListing,
   getListings,
   postReportData,
   postManagerHostawayIntegration,
   setAccessToken,
   getUserIntegration,
+  getManager,
+  getReportData,
 };
 

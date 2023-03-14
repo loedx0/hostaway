@@ -1,16 +1,10 @@
 const axios = require('axios');
 
-// Variables to get listings
-const urlListings = 'https://api.hostaway.com/v1/listings';
-
 const authType = 'Bearer';
-
-// variables to get the access token
-const urlToken = 'https://api.hostaway.com/v1/accessTokens';
 
 async function getAccessToken(client_id, client_secret, callback) {
   const test = `grant_type=client_credentials&scope=general&client_id=${client_id}&client_secret=${client_secret}`;
-  axios.post(urlToken, test, { headers: {
+  axios.post('https://api.hostaway.com/v1/accessTokens', test, { headers: {
     "Content-Type": "application/x-www-form-urlencoded",
     "Cache-Control": "no-cache",
   }})
@@ -25,12 +19,8 @@ async function getAccessToken(client_id, client_secret, callback) {
   });
 }
 
-//variables for the consolidation report service of hostaway
-const urlReport = 'https://api.hostaway.com/v1/finance/report/consolidated';
-
 async function getConsolidationReport(
   token,
-  managerId,
   listingId,
   listingAddress,
   fromDateInput,
@@ -38,7 +28,7 @@ async function getConsolidationReport(
   callback
 ) {
   const auth = authType+' '+token;
-  axios.post(urlReport, {
+  axios.post('https://api.hostaway.com/v1/finance/report/consolidated', {
     format: 'json',
     fromDate: fromDateInput,
     toDate: toDateInput,
@@ -49,8 +39,6 @@ async function getConsolidationReport(
       "Content-type": "application/json",
   }})
   .then((response) => {
-    console.log("printing property manager", managerId);
-    console.log("printing response", response);
     if(response.data.result.rows.length > 0){
       const tableData =  {
         listingId: parseInt(listingId),
@@ -64,7 +52,6 @@ async function getConsolidationReport(
         totalPmCommission: response.data.result.totals[16],
         totalOwnerPayout: response.data.result.totals[17],
       }
-      console.log("printing table data", tableData);
       callback(null, tableData);
     } else {
       callback(null, null);
@@ -84,7 +71,7 @@ async function getListings(token, callback) {
       'Cache-control': 'no-cache',
     }
   };
-  await axios.get(urlListings, options)
+  await axios.get('https://api.hostaway.com/v1/listings', options)
   .then(async (response) => {
     const properties = response.data.result.map((property)=>{
         return {

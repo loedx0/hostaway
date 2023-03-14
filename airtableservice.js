@@ -1,5 +1,4 @@
 const Airtable = require('airtable');
-// const base = new Airtable({ apiKey: 'patDvsWp9XhsDlAHq.cd8eb50aa23dc53594cd72e5c174276a83f354322386a5052750fb07587cdd26' }).base('appiAQlskdhkqvGi5');
 const base = new Airtable({apiKey: 'keyFvlhZwWyCrAKS4'}).base("appa8Kj9qD3QLzOdD");
 
 const listingsFields = {
@@ -16,7 +15,6 @@ const listingsFields = {
 
 async function postListings(managerId, propertylist) {
   propertylist?.forEach(property => {
-  // base('tbldeBq4ZZWIm0DZq').create({
     base('listings').create({
         [listingsFields.id]: property.id ,
         [listingsFields.address]: property.address,
@@ -34,7 +32,6 @@ async function postListings(managerId, propertylist) {
 };
 
 async function postListing(managerId, householdId, property) {
-  // base('tbldeBq4ZZWIm0DZq').create({
   const listingObj = {
     [listingsFields.id]: property.id ,
     [listingsFields.address]: property.address,
@@ -55,7 +52,6 @@ async function postListing(managerId, householdId, property) {
 
 async function getListings(managerId, findUnowned, responseCallback) {
   const onlyUnowned = findUnowned ? ", ({Property Owner} = '')" : "";
-  // base('tbldeBq4ZZWIm0DZq').select({
   base('listings').select({
     filterByFormula: `AND(({ID Property Manager} = ${managerId} )` + onlyUnowned +`)`
   }).all((error, records) => {
@@ -79,7 +75,6 @@ async function getListings(managerId, findUnowned, responseCallback) {
   });
 };
 
-
 const reportFields = {
   id: 'ID',
   address: 'Address',
@@ -96,9 +91,6 @@ const reportFields = {
 };
 
 async function postReportData(managerId, listingId, reportData) {
-  console.log("printing vars");
-  console.log(managerId);
-  console.log(listingId);
   base('listing-reports').create({
     [reportFields.address]: reportData.listingAddress,
     [reportFields.addressDescription]: reportData.listingAddressDescription,
@@ -129,7 +121,7 @@ async function getReportData(managerId, callback) {
     const formattedResponse = reportData.map((report) => {
       return {
         airtableId: report.id,
-        listingId: report.get("ID Listing"),
+        airtableListingId: report.get("ID Listing"),
         fromDate: report.get("From Date"),
         toDate: report.get("To Date"),
         address: report.get("Address"),
@@ -226,7 +218,6 @@ async function setAccessToken(integrationId, token, callback) {
 };
 
 async function getManager(email, callback) {
-  console.log("printing email" + `  (Email = '${email}')` )
   base('hostaway-integration').select({
     filterByFormula: `(Email = '${email}')`,
   }).all((error, response) => {
@@ -236,7 +227,6 @@ async function getManager(email, callback) {
         console.log("There was an error trying to get manager", error);
         callback(error, null);
       }
-      console.log("printing response", response);
       if(response.length > 0){
         const formattedResponse = {
           managerId: response[0].get("ID Property Manager"),
@@ -245,11 +235,21 @@ async function getManager(email, callback) {
           firstName: response[0].get("First Name"),
           lastName: response[0].get("Last Name"),
         }
-        console.log("printing formatted", formattedResponse);
         callback(null, formattedResponse);
       }
       callback(null, {managerId: null});
     } catch(e) {}
+  })
+}
+
+async function setPropertyOwner(updateArray, callback) {
+  base('listings').update(updateArray, function(error, response) {
+    if(error){
+      console.log("There was an error setting the property owner");
+      callback(error, null);
+    } else {
+      callback(null, response);
+    }
   })
 }
 
@@ -263,5 +263,6 @@ module.exports = {
   getUserIntegration,
   getManager,
   getReportData,
+  setPropertyOwner,
 };
 

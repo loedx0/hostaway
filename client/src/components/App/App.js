@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { usePromiseTracker, trackPromise } from "react-promise-tracker";
 import {
   Typography,
@@ -19,62 +19,8 @@ import {
   Tooltip,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
-import logo from './logo.svg';
 import './App.css';
-import HostAuthToken from '../Services/HostAuthToken';
-import getConsolidationReport, {formatReportData, formatReportColumns} from '../Services/HostConsolidationReport';
-import reportDataAPI from '../Table/ReportData';
 
-//OLD APP(){} FOR TESTING
-  // const[propertieslist, setpropertieslist] = useState([]);
-  // const [reportData, setReportData] = useState(null);
-  // const [reportColumns, setReportColumns] = useState([]);
-
-  // const handleOnClickPresionalo = async (e) => {
-  //     e.preventDefault();
-  //     const list = await HostAuthToken(setpropertieslist) ;
-  //     console.log(list);
-  // }
-
-  // const handleConsolidationReport = () => {
-  //   // getConsolidationReport(setReportData);
-  //   const reportDataFormatted = reportDataAPI.data.map((entry) => formatReportData(entry));
-  //   const totalsFormatted = formatReportData(reportDataAPI.totals);
-  //   console.log("printing values", reportDataAPI.columns);
-  //   console.log("printing values inside", reportDataFormatted[0]);
-
-  //   setReportData({
-  //     columns: reportDataAPI.columns,
-  //     data: [totalsFormatted, ...reportDataFormatted]
-  //   });
-  //   console.log("printing result columns", reportDataAPI.columns[0]);
-  // }
-
-  // const columns = useMemo(
-  //   () => formatReportColumns(reportData?.columns),
-  //   [reportData]
-  // );
-
-  // return (
-  //   <div className="App">
-  //     <header className="App-header">
-  //       <img src={logo} style={{maxHeight: "10vh"}} className="App-logo" alt="logo" />
-  //       <button style={{marginTop:'5%'}} onClick={handleOnClickPresionalo}>Presioname</button>
-  //       <div style={{marginBottom: "-32px"}}>
-  //         {propertieslist?.map((property)=>(
-  //           <span key={property.id} style={{fontSize: "5px", margin: "3px"}}>{property.id}</span>
-  //         ))}
-  //       </div>
-  //     </header>
-  //     <div className="App-body">
-  //       <span>Hello there</span>
-  //       <button onClick={handleConsolidationReport}>Ver consolidacion</button>
-  //     </div>
-  //       {reportData?
-  //       <Table columns={columns} data={reportData?.data} />
-  //       :null}
-  //   </div>
-  // );
 
 const styles = {
   mainStyle: {
@@ -96,63 +42,113 @@ const styles = {
   }
 }
 
-function createListingsData(id, address, city, state, country, zipcode, owner, householdId) {
-  return {
-    id,
-    address,
-    city,
-    state,
-    country,
-    zipcode,
-    owner,
-    householdId,
-  };
-};
-
 const headListingsCells = [
-    {
-      id: "id",
-      numeric: true,
-      disablePadding: true,
-      label: "Hostaway ID",
-    },
-    {
-      id: "address",
-      numeric: false,
-      disablePadding: false,
-      label: "Address",
-    },
-    {
-      id: "city",
-      numeric: false,
-      disablePadding: false,
-      label: "City",
-    },
-    {
-      id: "state",
-      numeric: false,
-      disablePadding: false,
-      label: "State",
-    },
-    {
-      id: "country",
-      numeric: false,
-      disablePadding: false,
-      label: "Country Code",
-    },
-    {
-      id: "zipcode",
-      numeric: true,
-      disablePadding: false,
-      label: "ZipCode",
-    },
-    {
-      id: "owner",
-      numeric: false,
-      disablePadding: false,
-      label: "Property Owner",
-    },
-  ];
+  {
+    id: "id",
+    numeric: true,
+    disablePadding: true,
+    label: "Hostaway ID",
+  },
+  {
+    id: "address",
+    numeric: false,
+    disablePadding: false,
+    label: "Address",
+  },
+  {
+    id: "city",
+    numeric: false,
+    disablePadding: false,
+    label: "City",
+  },
+  {
+    id: "state",
+    numeric: false,
+    disablePadding: false,
+    label: "State",
+  },
+  {
+    id: "country",
+    numeric: false,
+    disablePadding: false,
+    label: "Country Code",
+  },
+  {
+    id: "zipcode",
+    numeric: true,
+    disablePadding: false,
+    label: "ZipCode",
+  },
+  {
+    id: "owner",
+    numeric: false,
+    disablePadding: false,
+    label: "Property Owner",
+  },
+];
+
+const headReportCells = [
+  {
+    id: "id-listing",
+    numeric: true,
+    disablePadding: true,
+    label: "Listing ID",
+  },
+  {
+    id: "from-date",
+    numeric: false,
+    disablePadding: false,
+    label: "From Date",
+  },
+  {
+    id: "to-date",
+    numeric: false,
+    disablePadding: false,
+    label: "To Date",
+  },
+  {
+    id: "address",
+    numeric: false,
+    disablePadding: false,
+    label: "Address",
+  },
+  {
+    id: "description",
+    numeric: false,
+    disablePadding: false,
+    label: "Description",
+  },
+  {
+    id: "guest-fees",
+    numeric: true,
+    disablePadding: false,
+    label: "Gest Fees",
+  },
+  {
+    id: "taxes",
+    numeric: true,
+    disablePadding: false,
+    label: "Taxes",
+  },
+  {
+    id: "rental-revenue",
+    numeric: true,
+    disablePadding: false,
+    label: "Rental Revenue",
+  },
+  {
+    id: "pm-commission",
+    numeric: true,
+    disablePadding: false,
+    label: "PM Commission",
+  },
+  {
+    id: "owner-payout",
+    numeric: true,
+    disablePadding: false,
+    label: "Owner Payout",
+  },
+];
 
 function EnhancedTableHead(props) {
   const {onSelectAllClick, numSelected, rowCount} = props;
@@ -185,7 +181,7 @@ function EnhancedTableHead(props) {
 }
 
 const EnhancedTableToolbar = (props) => {
-  const { numSelected, selectedListings, handleCallback, forReports } = props;
+  const { numSelected, selectedListings, handleCallback, forReports, btnEnabled } = props;
   return (
     <Toolbar
       sx={{
@@ -217,10 +213,10 @@ const EnhancedTableToolbar = (props) => {
         </Typography>
       )}
       {numSelected > 0 && !forReports ? (
-        <Button variant='outlined' onClick={() => handleCallback(selectedListings)}>Set Owner</Button>
+        <Button variant='outlined' onClick={() => handleCallback(selectedListings)} disabled={btnEnabled}>Set Owner</Button>
       ) : null}
       {numSelected > 0 && forReports ? (
-        <Button variant='outlined' onClick={() => handleCallback(selectedListings)}>Import reports</Button>
+        <Button variant='outlined' onClick={() => handleCallback(selectedListings)} disabled={btnEnabled}>Import reports</Button>
       ) : null}
     </Toolbar>
   );
@@ -239,7 +235,6 @@ function App() {
   const [hostawayIdInput, setHostawayIdInput] = useState("");
   const [hostawaySecretInput, setHostawaySecretInput] = useState("");
   const [managerListings, setManagerListings] = useState([]);
-  // const [listingTableData, setListingTableData] = useState([]);
   const [selected, setSelected] = useState([]);
   const [showNewOwnerModal, setShowNewOwnerModal] = useState(false);
   const [propertyOwnerName, setPropertyOwnerName] = useState("");
@@ -247,34 +242,29 @@ function App() {
   const [fromDateInput, setFromDateInput] = useState("");
   const [toDateInput, setToDateInput] = useState("");
   const [reportCounter, setReportCounter] = useState(-1);
+  const [managerReports, setManagerReports] = useState([]);
 
   const startOver = () => {
     setShowComponent("start");
     setManagerData(null);
     setManagerEmailInput("");
     setManagerListings([]);
-    // setFirstNameInput("");
-    // setLastNameInput("");
-    // setCompanyInput("");
-    // setCompanyIdentifierInput("");
-    // setHostawayIdInput("");
-    // setHostawaySecretInput("");
+    setManagerReports([]);
+    setFirstNameInput("");
+    setLastNameInput("");
+    setCompanyInput("");
+    setCompanyIdentifierInput("");
+    setHostawayIdInput("");
+    setHostawaySecretInput("");
   }
 
   const validateManager = (managerObj) => {
-    console.log("manager obj", managerObj);
-    if(managerObj.managerId){
-      console.log("this is the manager id", managerObj.managerId);
+    if(managerObj.managerId) {
       setManagerData(managerObj);
-      if(!managerObj.token){
-        setShowComponent("token");
-        console.log("printing should add token to manager");
-      } else {
-        setShowComponent("options");
-      }
+      if(!managerObj.token){setShowComponent("token")}
+      else{setShowComponent("options")}
     } else {
       setShowComponent("manager");
-      console.log("there is no one with that mail");
     }
   }
 
@@ -283,7 +273,7 @@ function App() {
     fetch('/get_manager?email='+managerEmailInput)
     .then(response => response.json())
     .then(result => validateManager(result.result))
-    .catch(error => console.log("printing error", error))
+    .catch(error => console.log("There was a problem getting the manager", error))
     )
   }
 
@@ -307,13 +297,12 @@ function App() {
     })
     .then(response => response.json())
     .then(body => {
-      console.log("pritnign body data from set user", body.result)
       if(body.result){
         setManagerData(body.result);
         setShowComponent("options");
       }
     })
-    .catch(error => console.log("printing error", error))
+    .catch(error => console.log("There was a problem updating the manager", error))
     )
   }
 
@@ -322,12 +311,20 @@ function App() {
     fetch('/airtable/get_report_data?manager_id='+managerData.managerId)
     .then(response => response.json())
     .then(data => {
-      console.log("printing data rows", data.rows);
       if(data.rows.length > 0){
-        const sortedRows = data.rows;
-        sortedRows.sort((pa, pb) => pa.listingId < pb.listingId);
-        console.log("priknting rows", sortedRows);
+        if(managerListings.length === 0) getListings();
+        const sortedRows = data.rows.map((record) => {
+          const listing = managerListings.find(listing => listing.airtableId === record.airtableListingId[0]);
+          return {
+          ...record,
+            listingId: listing.id,
+          }
+        });
+        sortedRows.sort((pa, pb) => pa.listingId - pb.listingId);
+        setManagerReports(sortedRows);
+        setShowComponent("reports")
       } else {
+        setShowComponent("reports");
         setSnackMessage("No reports to show");
       }
     })
@@ -340,7 +337,6 @@ function App() {
     fetch('/airtable/get_listings?manager_id='+managerData.managerId)
     .then(response => response.json())
     .then(data => {
-      console.log("printing listings", data.listings);
       const sortedListings = data.listings;
       sortedListings.sort((pa, pb) => pa.countryCode.localeCompare(pb.countryCode) * -1);
       setManagerListings(sortedListings);
@@ -369,43 +365,52 @@ function App() {
     )
   }
 
-  const handleSetOwner = (selected) => {
-    console.log("printing selected listings", selected);
-    setShowNewOwnerModal(true);
-  }
+  const handleSetOwner = (selected) => { setShowNewOwnerModal(true); }
 
   const saveNewOwner = () => {
-    console.log("selected:", selected);
-    console.log("new owner:", propertyOwnerName);
+    trackPromise(
+    fetch('/airtable/set_property_owner', {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        listings: selected,
+        ownerName: propertyOwnerName,
+      })
+    })
+    .then(response => response.json())
+    .then((res) => {
+      getListings();
+    })
+    .catch(error => console.log("Error setting the property owner", error))
+    )
     setSelected([]);
     setShowNewOwnerModal(false);
   }
 
   const showImportReportData = () => {
-    trackPromise(
-    fetch('/airtable/get_listings?manager_id='+managerData.managerId)
-    .then(response => response.json())
-    .then(data => {
-      console.log("printing listings", data.listings);
-      const sortedListings = data.listings;
-      sortedListings.sort((pa, pb) => pa.countryCode.localeCompare(pb.countryCode) * -1);
-      setManagerListings(sortedListings);
-      setShowComponent('reports');
-    })
-    .catch(error => console.log("Error getting listings", error))
-    )
+    if(managerListings.length > 0) {setShowComponent("import-reports")}
+    else {
+      trackPromise(
+      fetch('/airtable/get_listings?manager_id='+managerData.managerId)
+      .then(response => response.json())
+      .then(data => {
+        const sortedListings = data.listings;
+        sortedListings.sort((pa, pb) => pa.countryCode.localeCompare(pb.countryCode) * -1);
+        setManagerListings(sortedListings);
+        setShowComponent("import-reports");
+      })
+      .catch(error => console.log("Error getting listings", error))
+      )
+    }
   }
 
   const importReportData = () => {
-    console.log("selected:", selected);
-    const selectedListings = managerListings.filter((sel) =>
-      selected.filter(
-        current => current ===sel.airtableId
-      ).length
+    const selectedListings = managerListings.filter(
+      (sel) => selected.filter(current => current === sel.airtableId).length
     )
-    console.log("listings selected", selectedListings);
-    console.log("from:", fromDateInput);
-    console.log("to:", toDateInput);
     setReportCounter(selectedListings.length);
     selectedListings.forEach((listing) => {
       trackPromise(
@@ -425,14 +430,13 @@ function App() {
         })
       })
       .then(response => response.json())
-      .then(() => {})
+      .then((res) => {setShowComponent('reports')})
       .catch(error => console.log("Error getting report", error))
       )
     })
   }
 
   const importListings = () => {
-    console.log("hello there");
     trackPromise(
     fetch('/import_listings', {
       method: "POST",
@@ -447,7 +451,6 @@ function App() {
     })
     .then(response => response.json())
     .then(data => {
-      console.log("printing imported listings", data.new_listings);
       if(data.new_listings.length > 0){
         getListings();
         setShowComponent('listings');
@@ -471,7 +474,6 @@ function App() {
   const handleClick = (event, id) => {
     const selectedIndex = selected.indexOf(id);
     let newSelected = [];
-
     if (selectedIndex === -1) {
       newSelected = newSelected.concat(selected, id);
     } else if (selectedIndex === 0) {
@@ -484,7 +486,6 @@ function App() {
         selected.slice(selectedIndex + 1),
       );
     }
-
     setSelected(newSelected);
   };
 
@@ -498,12 +499,11 @@ function App() {
   };
 
   useEffect(() => {
-    console.log("printing reportCounter", reportCounter);
-    console.log("printing promise tracker", promiseInProgress);
     if(reportCounter > 0 && !promiseInProgress){
-      setSelected([])
+      setSelected([]);
       setSnackMessage("Reportes descargados correctamente");
-      setShowComponent("options");
+      getReportData();
+      setShowComponent("reports");
       setReportCounter(-1);
     }
   }, [reportCounter, promiseInProgress])
@@ -546,13 +546,12 @@ function App() {
             <Typography sx={styles.mainStyle} variant="h5">Click an option</Typography>
             <Button sx={styles.mainStyle} variant='outlined' size='medium' onClick={getListings} disabled={promiseInProgress}>{promiseInProgress ? "Loading" : "See Properties (listings)"}</Button>
             <Button sx={styles.mainStyle} variant='outlined' size='medium' onClick={getReportData} disabled={promiseInProgress}>{promiseInProgress ? "Loading" : "See Saved Reports"}</Button>
-            <Button sx={styles.mainStyle} variant='outlined' size='medium' onClick={showImportReportData} disabled={promiseInProgress}>{promiseInProgress ? "Loading" : "Import Reports"}</Button>
           </Box>
         : null}
         {showComponent === "listings" ?
           <Box>
             {showHeader()}
-            <EnhancedTableToolbar numSelected={selected.length} selectedListings={selected} handleCallback={handleSetOwner} forReports={false} />
+            <EnhancedTableToolbar numSelected={selected.length} selectedListings={selected} handleCallback={handleSetOwner} forReports={false} btnEnabled={false} />
             <TableContainer>
               {managerListings.length > 0 ?
                 <Box>
@@ -602,7 +601,7 @@ function App() {
                             <TableCell align="right">{listing.state}</TableCell>
                             <TableCell align="right">{listing.countryCode}</TableCell>
                             <TableCell align="right">{listing.zipcode}</TableCell>
-                            <TableCell align="right">{listing.owner}</TableCell>
+                            <TableCell align="right">{listing.propertyOwner}</TableCell>
                           </TableRow>
                         );
                       })}
@@ -623,12 +622,79 @@ function App() {
         {showComponent === "reports" ?
           <Box>
             {showHeader()}
+            <Typography sx={styles.mainStyle} variant="h5">Reports</Typography>
+            <TableContainer>
+              {managerReports.length > 0 ?
+                <Box>
+                  <Table sx={{ minWidth: 750 }} aria-labelledby="tableTitle" size="small">
+                    <TableHead>
+                      <TableRow>
+                        {headReportCells?.map(headCell => (
+                          <TableCell
+                            key={headCell.id}
+                            align="left"
+                            padding={headCell.disablePadding ? 'none' : 'normal'}
+                          >
+                            {headCell.label}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {managerReports?.map((report, index) =>{
+                        const labelId = `table-row-${index}`;
+                        return (
+                          <TableRow
+                            hover
+                            tabIndex={-1}
+                            key={report.airtableId}
+                          >
+                            <TableCell
+                              component="th"
+                              id={labelId}
+                              scope="row"
+                              padding="none"
+                              align="right"
+                            >
+                             {report.householdId ?
+                              <Tooltip title="Synchronized with Household"><Button size='small' variant="text" color='inherit'>&#8635; {report.listingId}</Button></Tooltip>
+                              : report.listingId}
+                            </TableCell>
+                            <TableCell align="right">{report.fromDate}</TableCell>
+                            <TableCell align="right">{report.toDate}</TableCell>
+                            <TableCell align="right">{report.address}</TableCell>
+                            <TableCell align="right">{report.addressDescription}</TableCell>
+                            <TableCell align="right">{report.guestFees}</TableCell>
+                            <TableCell align="right">{report.taxes}</TableCell>
+                            <TableCell align="right">{report.rentalRevenue}</TableCell>
+                            <TableCell align="right">{report.pmCommission}</TableCell>
+                            <TableCell align="right">{report.ownerPayout}</TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                  <Button sx={styles.mainStyle} variant='outlined' size='medium' onClick={showImportReportData} disabled={promiseInProgress}>{promiseInProgress ? "Loading" : "Import more Reports"}</Button>
+                </Box>
+              :
+                <Box>
+                  <Typography variant='h5'>There are no data to report for this manager</Typography>
+                  <Typography variant="body1">You should import new Report Data from hostaway</Typography>
+                  <Button sx={styles.mainStyle} variant='outlined' size='medium' onClick={showImportReportData} disabled={promiseInProgress}>{promiseInProgress ? "Loading" : "Import Reports"}</Button>
+                </Box>
+              }
+            </TableContainer>
+          </Box>
+        : null}
+        {showComponent === "import-reports" ?
+          <Box>
+            {showHeader()}
             <Typography sx={styles.mainStyle} variant="h5">Input dates and select properties to get report data</Typography>
             <Box sx={{display: "flex"}}>
               <TextField sx={{marginRight: "20px", marginLeft: "auto", display: "flex"}} label="Date From" placeholder='2023-01-30' variant='filled' size='small' value={fromDateInput} onChange={(ev)=> setFromDateInput(ev.target.value)}/>
               <TextField sx={{marginRight: "auto", marginLeft: "20px", display: "flex"}} label="Date To" placeholder='2023-01-30' variant='filled' size='small' value={toDateInput} onChange={(ev)=> setToDateInput(ev.target.value)} />
             </Box>
-            <EnhancedTableToolbar numSelected={selected.length} selectedListings={selected} handleCallback={importReportData} forReports={true} />
+            <EnhancedTableToolbar numSelected={selected.length} selectedListings={selected} handleCallback={importReportData} forReports={true} btnEnabled={!(toDateInput !== "" && fromDateInput !== "")} />
             <TableContainer>
               {managerListings.length > 0 ?
                 <Box>
@@ -709,7 +775,7 @@ function App() {
               Enter the name of the Properties' Owner
             </Typography>
             <TextField sx={styles.mainStyle} label="Property Owner Name" placeholder='John Doe' variant='filled' size='small' value={propertyOwnerName} onChange={(ev)=> setPropertyOwnerName(ev.target.value)} />
-            <Button sx={styles.mainStyle} variant='outlined' size='medium' onClick={saveNewOwner}>Save</Button>
+            <Button sx={styles.mainStyle} variant='outlined' size='medium' onClick={saveNewOwner} disabled={propertyOwnerName === ""}>Save</Button>
           </Box>
         </Modal>
         <Snackbar

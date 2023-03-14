@@ -224,6 +224,7 @@ const EnhancedTableToolbar = (props) => {
 
 function App() {
   const { promiseInProgress } = usePromiseTracker();
+  const baseUrl = process.env.REACT_APP_BASE_URL || '';
 
   const [managerEmailInput, setManagerEmailInput] = useState("");
   const [managerData, setManagerData] = useState();
@@ -270,7 +271,7 @@ function App() {
 
   const checkEmail = () => {
     trackPromise(
-    fetch('/get_manager?email='+managerEmailInput)
+    fetch(baseUrl+'/get_manager?email='+managerEmailInput)
     .then(response => response.json())
     .then(result => validateManager(result.result))
     .catch(error => console.log("There was a problem getting the manager", error))
@@ -279,7 +280,7 @@ function App() {
 
   const createManager = () => {
     trackPromise(
-    fetch('/post_user_integration', {
+    fetch(baseUrl+'/post_user_integration', {
       method: "POST",
       headers: {
         Accept: "application/json",
@@ -308,7 +309,7 @@ function App() {
 
   const getReportData = () => {
     trackPromise(
-    fetch('/airtable/get_report_data?manager_id='+managerData.managerId)
+    fetch(baseUrl+'/airtable/get_report_data?manager_id='+managerData.managerId)
     .then(response => response.json())
     .then(data => {
       if(data.rows.length > 0){
@@ -334,7 +335,7 @@ function App() {
 
   const getListings = () => {
     trackPromise(
-    fetch('/airtable/get_listings?manager_id='+managerData.managerId)
+    fetch(baseUrl+'/airtable/get_listings?manager_id='+managerData.managerId)
     .then(response => response.json())
     .then(data => {
       const sortedListings = data.listings;
@@ -369,7 +370,7 @@ function App() {
 
   const saveNewOwner = () => {
     trackPromise(
-    fetch('/airtable/set_property_owner', {
+    fetch(baseUrl+'/airtable/set_property_owner', {
       method: "POST",
       headers: {
         Accept: "application/json",
@@ -394,7 +395,7 @@ function App() {
     if(managerListings.length > 0) {setShowComponent("import-reports")}
     else {
       trackPromise(
-      fetch('/airtable/get_listings?manager_id='+managerData.managerId)
+      fetch(baseUrl+'/airtable/get_listings?manager_id='+managerData.managerId)
       .then(response => response.json())
       .then(data => {
         const sortedListings = data.listings;
@@ -414,7 +415,7 @@ function App() {
     setReportCounter(selectedListings.length);
     selectedListings.forEach((listing) => {
       trackPromise(
-      fetch('/consolidation_report', {
+      fetch(baseUrl+'/consolidation_report', {
         method: "POST",
         headers: {
           Accept: "application/json",
@@ -438,7 +439,7 @@ function App() {
 
   const importListings = () => {
     trackPromise(
-    fetch('/import_listings', {
+    fetch(baseUrl+'/import_listings', {
       method: "POST",
       headers: {
         Accept: "application/json",

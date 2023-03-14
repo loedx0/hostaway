@@ -6,15 +6,7 @@ const hostaway = require('./hostawayService.js');
 const household = require('./householdService.js');
 
 app.use(express.json());
-const port = process.env.PORT || 5001;
-
-// Variables to manage for each function
-// const propertyManager = 345345;
-// const listingId = 140052;
-// const fromDateInput = '2023-01-01';
-// const toDateInput = '2023-02-01';
-// const secret = "8862230840d67d623b45f94af4d1c0119a54152cb0ceff8f9ce6cace330a200f";
-// const clientId = "52937";
+const port = process.env.PORT || 5002;
 
 const importConsolidationReport = async (req, res) => {
   const reqBody  = req.body;
@@ -296,7 +288,6 @@ const setPropertyOwner = async (req, res) => {
     res.json({ result : response});
   })
 }
-
 
 // This displays message that the server running and listening to specified port
 app.listen(port, () => console.log(`Listening on port ${port}`));

@@ -33,6 +33,7 @@ async function getConsolidationReport(
     fromDate: fromDateInput,
     toDate: toDateInput,
     listingMapIds: [listingId],
+    statuses: ["new", "modified"],
   }, {
   headers: {
       'Authorization': auth,

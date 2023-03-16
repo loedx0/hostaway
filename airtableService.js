@@ -59,19 +59,23 @@ async function getListings(managerId, findUnowned, responseCallback) {
       console.log("Airtable returned error", error);
       responseCallback(error, null);
     }
-    const formattedRecords = records.map((listing) => ({
-      airtableId: listing.id,
-      id: listing.get("ID"),
-      address: listing.get("Address"),
-      city: listing.get("City"),
-      state: listing.get("State"),
-      countryCode: listing.get("Country Code"),
-      propertyOwner: listing.get("Property Owner"),
-      zipcode: listing.get('Zipcode'),
-      householdId: listing.get('ID Household'),
-      managerId
-    }));
-    responseCallback(null, formattedRecords);
+    console.log("ready to return", records.length);
+    if(records.length > 0){
+      console.log("ready for manager:", managerId);
+      const formattedRecords = records.map((listing) => ({
+        airtableId: listing.id,
+        id: listing.get("ID"),
+        address: listing.get("Address"),
+        city: listing.get("City"),
+        state: listing.get("State"),
+        countryCode: listing.get("Country Code"),
+        propertyOwner: listing.get("Property Owner"),
+        zipcode: listing.get('Zipcode'),
+        householdId: listing.get('ID Household'),
+        managerId
+      }));
+      responseCallback(null, formattedRecords);
+    } else { responseCallback(null, []) };
   });
 };
 
@@ -201,20 +205,22 @@ async function getUserIntegration(managerId, callback) {
 }
 
 async function setAccessToken(integrationId, token, callback) {
-  base('hostaway-integration').update([
-    {
-      "id": integrationId,
-      "fields": {
-        [hostawayIntegrationFields.token]: token,
+  try{
+    base('hostaway-integration').update([
+      {
+        "id": integrationId,
+        "fields": {
+          [hostawayIntegrationFields.token]: token,
+        }
+      },
+    ], function(error, response) {
+      if(error) {
+        console.log("there was an error setting the integration token");
+        callback(error, null);
       }
-    },
-  ], function(error, response) {
-    if(error) {
-      console.log("there was an error setting the integration token");
-      callback(error, null);
-    }
-    callback(null, response);
-  });
+      callback(null, response);
+    });
+  } catch(e) {}
 };
 
 async function getManager(email, callback) {
@@ -222,7 +228,6 @@ async function getManager(email, callback) {
     filterByFormula: `(Email = '${email}')`,
   }).all((error, response) => {
     try{
-
       if(error){
         console.log("There was an error trying to get manager", error);
         callback(error, null);
@@ -253,6 +258,33 @@ async function setPropertyOwner(updateArray, callback) {
   })
 }
 
+async function getAllManagers(callback) {
+  base('hostaway-integration').select().all((error, response) => {
+    try{
+      if(error){
+        console.log("There was an error trying to get manager", error);
+        callback(error, null);
+      }
+      if(response.length > 0){
+        const formattedResponse = response.map((manager) => {
+          return {
+            airtableId: manager.id,
+            managerId: manager.get("ID Property Manager"),
+            token: manager.get("Token"),
+            email: manager.get("Email"),
+            firstName: manager.get("First Name"),
+            lastName: manager.get("Last Name"),
+            secret: manager.get("Secret"),
+            hostawayId: manager.get("ID Hostaway"),
+          }
+        });
+        callback(null, formattedResponse);
+      }
+      callback(null, []);
+    } catch(e) {}
+  })
+}
+
 module.exports = {
   postListings,
   postListing,
@@ -264,5 +296,6 @@ module.exports = {
   getManager,
   getReportData,
   setPropertyOwner,
+  getAllManagers,
 };
 

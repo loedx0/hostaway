@@ -59,9 +59,7 @@ async function getListings(managerId, findUnowned, responseCallback) {
       console.log("Airtable returned error", error);
       responseCallback(error, null);
     }
-    console.log("ready to return", records.length);
     if(records.length > 0){
-      console.log("ready for manager:", managerId);
       const formattedRecords = records.map((listing) => ({
         airtableId: listing.id,
         id: listing.get("ID"),
